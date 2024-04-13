@@ -1,78 +1,91 @@
-// pages/artwork/index.js
-import { useRouter } from "next/router";
-import useSWR from "swr";
-import { useEffect, useState } from "react";
-import { Pagination, Row, Col, Card } from "react-bootstrap";
-import ArtworkCard from "../../components/ArtworkCard";
 
-import validObjectIDList from "@/public/data/validObjectIDList.json";
+
+import useSWR from 'swr';
+import { useState, useEffect } from 'react';
+import { Card, Col, Container, Pagination, Row } from 'react-bootstrap';
+import { useRouter } from 'next/router';
+import ArtworkCard from '@/components/ArtworkCard';
+import Error from 'next/error';
+import validObjectIDList from '@/public/data/validObjectIDList.json'
 
 const PER_PAGE = 12;
 
-const Artwork = () => {
-  const [artworkList, setArtworkList] = useState(null);
-  const [page, setPage] = useState(1);
+export default function Artwork() {
+
+  const [artworkList, setArtworkList] = useState();
   const router = useRouter();
-  const finalQuery = router.asPath.split("?")[1];
-  const { data, error } = useSWR(
-    `https://collectionapi.metmuseum.org/public/collection/v1/search?${finalQuery}`
-  );
+  const [page, setPage] = useState(1);
 
-  useEffect(() => {
-    if (data) {
-      const results = [];
-      if (data.objectIDs) {
-        const filteredResults = validObjectIDList.objectIDs.filter((x) =>
-          data.objectIDs.includes(x)
-        );
-        for (let i = 0; i < filteredResults.length; i += PER_PAGE) {
-          const chunk = filteredResults.slice(i, i + PER_PAGE);
-          results.push(chunk);
-        }
-        setArtworkList(results);
-        setPage(1);
-      }
-    }
-  }, [data]);
-
-  const previousPage = () => {
-    if (page > 1) {
-      setPage(page - 1);
-    }
-  };
-
-  const nextPage = () => {
+  let finalQuery = router.asPath.split('?')[1];
+  
+  const { data, error } = useSWR(`https://collectionapi.metmuseum.org/public/collection/v1/search?${finalQuery}`);
+  
+  
+  function nextPage() {
     if (page < artworkList.length) {
-      setPage(page + 1);
+      setPage(p => p + 1)
     }
-  };
+  }
+  
+  function previousPage() {
+    if (page > 1) {
+      setPage(p => p - 1);
+    }
+  }
+  
+  useEffect(() => {
+    
+    
+    if (data) {
+      let filteredResults = validObjectIDList.objectIDs.filter(x => data.objectIDs?.includes(x));
+      const results = [];
+      for (let i = 0; i < filteredResults.length; i += PER_PAGE) {
+        const chunk = filteredResults.slice(i, i + PER_PAGE);
+        results.push(chunk);
+      }
 
-  if (error) return <Error statusCode={404} />;
-  if (!artworkList) return null;
+      for (let i = 0; i < data?.objectIDs?.length; i += PER_PAGE) {
+        const chunk = data?.objectIDs.slice(i, i + PER_PAGE);
+        results.push(chunk);
+      }
 
-  return (
-    <>
-      <Row className="gy-4">
-        {artworkList.length > 0 ? (
-          artworkList[page - 1].map((currentObjectID) => (
-            <Col lg={3} key={currentObjectID}>
-              <ArtworkCard objectID={currentObjectID} />
-            </Col>
-          ))
-        ) : (
-          <Col>
-            <Card>
-              <Card.Body>
-                <h4>Nothing Here</h4>
-                Try searching for something else.
-              </Card.Body>
-            </Card>
-          </Col>
-        )}
-      </Row>
-      {artworkList.length > 0 && (
-        <Row>
-          <Col>
+      setArtworkList(results);
+      setPage(1);
+
+    }
+
+  }, [data])
+
+  if (error) {
+    return <Error statusCode={404} />
+  }
+
+  if (artworkList) {
+    return (
+      <>
+
+        {artworkList.length > 0 ?
+
+          <Row className="gy-4">{artworkList[page - 1]?.map(objID => (
+            <Col lg={3} key={objID}><ArtworkCard objectID={objID} /></Col>
+          ))}</Row>
+
+          :
+
+          <Card>
+            <Card.Body>
+              <Card.Text>
+                <h4>Nothing Here</h4>Try searching for something else.
+              </Card.Text>
+            </Card.Body>
+          </Card>
+
+        }
+
+        {artworkList.length > 0 && <Row>
+
+          <Col >
+            <br />
             <Pagination>
               <Pagination.Prev onClick={previousPage} />
               <Pagination.Item>{page}</Pagination.Item>
@@ -80,9 +93,15 @@ const Artwork = () => {
             </Pagination>
           </Col>
         </Row>
-      )}
-    </>
-  );
-};
 
-export default Artwork;
+        }
+      </>
+    )
+  } else {
+    return null;
+  }
+}
+
+
+
+

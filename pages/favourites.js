@@ -1,34 +1,28 @@
-// pages/favourites.js
+import { favouritesAtom } from "@/store"
+import { useAtom } from "jotai"
+import { Col, Row, Card } from "react-bootstrap";
+import ArtworkCard from "@/components/ArtworkCard";
 
-import { Row, Col, Card } from "react-bootstrap";
-import { useAtom } from "jotai";
-import { favouritesAtom } from "../store";
-import ArtworkCard from "../components/ArtworkCard";
+export default function Favourites() {
+    const [favouritesList, setFavouritesList] = useAtom(favouritesAtom);
+    
+    if(!favouritesList) return null;
 
-const Favourites = () => {
-  const [favouritesList] = useAtom(favouritesAtom);
+        return (
+            <>
+                {favouritesList.length > 0 ?
+                    <Row className="gy-4">{favouritesList?.map(objID => (
+                        <Col lg={3} key={objID}><ArtworkCard objectID={objID}/></Col>
+                    ))}</Row>
+                    :
+                    <Card>
+                        <Card.Body>
+                            <Card.Text>
+                                <h4>Nothing Here</h4>Try adding some new artwork to the list.
+                            </Card.Text>
+                        </Card.Body>
+                    </Card>}
+            </>
+        );
 
-  return (
-    <div>
-      <h1>Favourites</h1>
-      {favouritesList.length === 0 ? (
-        <Card>
-          <Card.Body>
-            <h4>Nothing Here</h4>
-            Try adding some new artwork to the list.
-          </Card.Body>
-        </Card>
-      ) : (
-        <Row className="gy-4">
-          {favouritesList.map((objectID) => (
-            <Col lg={3} key={objectID}>
-              <ArtworkCard objectID={objectID} />
-            </Col>
-          ))}
-        </Row>
-      )}
-    </div>
-  );
-};
-
-export default Favourites;
+}
